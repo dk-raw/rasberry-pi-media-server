@@ -5,7 +5,7 @@ OMV 7, Portainer, Plex, Prowlarr, Radarr, Sonarr, Bazarr automated media server 
 It's best practise to isolate the Rasberry Pi in your network, since it's torrenting all the time, for security. I have a Ubiquity Dream Machine running Unifi Network 7.2 and this is what I did to balance functionality and security
 1. create a standard VLAN with no content filtering and the subnet of your choice
 
-_Since Unifi allows all inter-VLAN traffic by default, certain firewall rules are required isolate that new network._
+_Since Unifi allows all inter-VLAN traffic by default, certain firewall rules are required to isolate that new network._
 
 2. create a `LAN In` rule to `Drop` everything but `TCP` (select TCP under IPv4 Protocol and check `Match all protocols except for this` from Source the new VLAN, to Destination your Home network
 
