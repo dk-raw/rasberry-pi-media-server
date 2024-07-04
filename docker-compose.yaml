@@ -1,0 +1,134 @@
+services:
+
+  ##############################################
+  #             PLEX MEDIA SERVER              #
+  ##############################################
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    network_mode: host # Use host network
+    environment:
+      - PUID=1000 
+      - PGID=1000
+      - TZ=Europe/Athens
+      - VERSION=docker
+      - PLEX_CLAIM=xxxxxxxxxxxxxxxxx #claim token
+    volumes:
+      - CHANGE_TO_COMPOSE_DATA_PATH/plex/config:/config #path to config folder
+      - /srv/dev-disk-by-uuid-b1237544-1f78-4f15-8820-5bb064e0e736/data/plex/series:/tv #path to series folder
+      - /srv/dev-disk-by-uuid-b1237544-1f78-4f15-8820-5bb064e0e736/data/plex/movies:/movies #path to movies folder
+    restart: unless-stopped
+
+  ##############################################
+  #                 PORTAINER                  #
+  ##############################################
+  portainer-ce:
+    ports:
+        - '8000:8000'
+        - '9443:9443'
+    container_name: portainer
+    environment:
+      - PUID=1000           
+      - PGID=1000           
+      - TZ=Europe/Athens
+    restart: always
+    volumes:
+        - '/var/run/docker.sock:/var/run/docker.sock'
+        - 'CHANGE_TO_COMPOSE_DATA_PATH/portainer/portainer_data:/data'
+    image: 'portainer/portainer-ce:latest'
+
+  ##############################################
+  #                  RADARR                    #
+  ##############################################
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Athens
+    volumes:
+      - CHANGE_TO_COMPOSE_DATA_PATH/radarr/config:/config #path to config folder
+      - /srv/dev-disk-by-uuid-b1237544-1f78-4f15-8820-5bb064e0e736/data/plex/movies:/movies #path to plex movies folder
+      - /srv/dev-disk-by-uuid-b1237544-1f78-4f15-8820-5bb064e0e736/data/docker/appdata/qbittorrent/downloads:/downloads #path to qbittorrent downloads folder
+    ports:
+      - 7878:7878
+    restart: unless-stopped  
+    depends_on:
+      - qbittorrent
+
+  ##############################################
+  #                   SONARR                   #
+  ##############################################
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Athens
+    volumes:
+      - CHANGE_TO_COMPOSE_DATA_PATH/sonarr_fixed/config:/config #path to config folder
+      - /srv/dev-disk-by-uuid-b1237544-1f78-4f15-8820-5bb064e0e736/data/plex/series:/tv #path to plex series folder
+      - /srv/dev-disk-by-uuid-b1237544-1f78-4f15-8820-5bb064e0e736/data/docker/appdata/qbittorrent/downloads:/downloads #path to qbittorrent downloads folder
+    ports:
+      - 8989:8989
+    restart: unless-stopped
+    depends_on:
+      - qbittorrent
+
+  ##############################################
+  #              QBITORRENT CLIENT             #
+  ##############################################
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment: 
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Athens
+      - WEBUI_PORT=8080
+      - TORRENTING_PORT=6881
+    volumes:
+      - /srv/dev-disk-by-uuid-b1237544-1f78-4f15-8820-5bb064e0e736/data/docker/appdata/qbittorrent/config:/config #path to config folder
+      - /srv/dev-disk-by-uuid-b1237544-1f78-4f15-8820-5bb064e0e736/data/docker/appdata/qbittorrent/downloads:/downloads #path to temporary download folder
+    ports:
+      - 8080:8080
+      - 6881:6881
+      - 6881:6881/udp
+    restart: unless-stopped
+  
+  ##############################################
+  #              PROWLARR INDEXER              #
+  ##############################################
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Athens
+    volumes:
+      - /srv/dev-disk-by-uuid-b1237544-1f78-4f15-8820-5bb064e0e736/data/docker/appdata/prowlarr/config:/config #path to config folder
+    ports:
+      - 9696:9696
+    restart: unless-stopped
+
+  ##############################################
+  #              BAZARR SUBTITLES              #
+  ##############################################
+
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Athens
+    volumes:
+      - /srv/dev-disk-by-uuid-b1237544-1f78-4f15-8820-5bb064e0e736/data/docker/appdata/bazarr/config:/config #path to config folder
+      - /srv/dev-disk-by-uuid-b1237544-1f78-4f15-8820-5bb064e0e736/data/plex/movies:/movies #path to plex movies folder
+      - /srv/dev-disk-by-uuid-b1237544-1f78-4f15-8820-5bb064e0e736/data/plex/series:/tv #path to plex series folder
+    ports:
+      - 6767:6767
+    restart: unless-stopped
