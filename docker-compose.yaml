@@ -1,26 +1,26 @@
 services:
 
   ##############################################
-  #             PLEX MEDIA SERVER              #
+  #  PLEX MEDIA SERVER                         #
   ##############################################
   plex:
     image: lscr.io/linuxserver/plex:latest
     container_name: plex
-    network_mode: host # Use host network
+    network_mode: host #use host network
     environment:
       - PUID=1000 
       - PGID=1000
-      - TZ=Europe/Athens
+      - TZ=Etc/UTC
       - VERSION=docker
-      - PLEX_CLAIM=xxxxxxxxxxxxxxxxx #claim token
+      - PLEX_CLAIM=XXXXXXXXXXXXXXX #claim token
     volumes:
-      - CHANGE_TO_COMPOSE_DATA_PATH/plex/config:/config #path to config folder
-      - /srv/dev-disk-by-uuid-b1237544-1f78-4f15-8820-5bb064e0e736/data/plex/series:/tv #path to series folder
-      - /srv/dev-disk-by-uuid-b1237544-1f78-4f15-8820-5bb064e0e736/data/plex/movies:/movies #path to movies folder
+      - /path/to/docker/appdata/plex/config:/config
+      - /path/to/plex/series:/tv #series folder
+      - /path/to/plex/movies:/movies #movies folder
     restart: unless-stopped
 
   ##############################################
-  #                 PORTAINER                  #
+  #  PORTAINER CONTAINER INSPECTOR             #
   ##############################################
   portainer-ce:
     ports:
@@ -30,15 +30,55 @@ services:
     environment:
       - PUID=1000           
       - PGID=1000           
-      - TZ=Europe/Athens
+      - TZ=Etc/UTC
     restart: always
     volumes:
         - '/var/run/docker.sock:/var/run/docker.sock'
-        - 'CHANGE_TO_COMPOSE_DATA_PATH/portainer/portainer_data:/data'
+        - '/path/to/docker/appdata/portainer/portainer_data:/data'
     image: 'portainer/portainer-ce:latest'
 
   ##############################################
-  #                  RADARR                    #
+  #  QBITTORRENT TORRENT CLIENT                #
+  ##############################################
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - WEBUI_PORT=8080
+      - TORRENTING_PORT=6881
+    volumes:
+      - /path/to/docker/appdata/qbittorrent/config:/config
+      - /path/to/docker/appdata/qbittorrent/downloads:/downloads
+    ports:
+      - 8080:8080
+      - 6881:6881
+      - 6881:6881/udp
+    restart: unless-stopped
+
+  ##############################################
+  #  NZBGET USENET CLIENT                      #
+  ##############################################
+  nzbget:
+    image: lscr.io/linuxserver/nzbget:latest
+    container_name: nzbget
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - NZBGET_USER=nzbget
+      - NZBGET_PASS=tegbzn6789
+    volumes:
+      - /path/to/docker/appdata/nzbget/config:/config
+      - /path/to/docker/appdata/nzbget/downloads:/downloads
+    ports:
+      - 6789:6789
+    restart: unless-stopped
+
+  ##############################################
+  #  RADARR MOVIES                             #
   ##############################################
   radarr:
     image: lscr.io/linuxserver/radarr:latest
@@ -46,11 +86,11 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Europe/Athens
+      - TZ=Etc/UTC
     volumes:
-      - CHANGE_TO_COMPOSE_DATA_PATH/radarr/config:/config #path to config folder
-      - /srv/dev-disk-by-uuid-b1237544-1f78-4f15-8820-5bb064e0e736/data/plex/movies:/movies #path to plex movies folder
-      - /srv/dev-disk-by-uuid-b1237544-1f78-4f15-8820-5bb064e0e736/data/docker/appdata/qbittorrent/downloads:/downloads #path to qbittorrent downloads folder
+      - /path/to/docker/appdata/radarr/config:/config
+      - /path/to/plex/movies:/movies #plex movies folder
+      - /path/to/docker/appdata/qbittorrent/downloads:/downloads #qbittorrent downloads folder
     ports:
       - 7878:7878
     restart: unless-stopped  
@@ -58,7 +98,7 @@ services:
       - qbittorrent
 
   ##############################################
-  #                   SONARR                   #
+  # SONARR SERIES                              #
   ##############################################
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
@@ -66,40 +106,19 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Europe/Athens
+      - TZ=Etc/UTC
     volumes:
-      - CHANGE_TO_COMPOSE_DATA_PATH/sonarr_fixed/config:/config #path to config folder
-      - /srv/dev-disk-by-uuid-b1237544-1f78-4f15-8820-5bb064e0e736/data/plex/series:/tv #path to plex series folder
-      - /srv/dev-disk-by-uuid-b1237544-1f78-4f15-8820-5bb064e0e736/data/docker/appdata/qbittorrent/downloads:/downloads #path to qbittorrent downloads folder
+      - /path/to/docker/appdata/sonarr_fixed/config:/config
+      - /path/to/plex/series:/tv #plex series folder
+      - /path/to/docker/appdata/qbittorrent/downloads:/downloads #qbittorrent downloads folder
     ports:
       - 8989:8989
     restart: unless-stopped
     depends_on:
       - qbittorrent
-
-  ##############################################
-  #              QBITORRENT CLIENT             #
-  ##############################################
-  qbittorrent:
-    image: lscr.io/linuxserver/qbittorrent:latest
-    container_name: qbittorrent
-    environment: 
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/Athens
-      - WEBUI_PORT=8080
-      - TORRENTING_PORT=6881
-    volumes:
-      - /srv/dev-disk-by-uuid-b1237544-1f78-4f15-8820-5bb064e0e736/data/docker/appdata/qbittorrent/config:/config #path to config folder
-      - /srv/dev-disk-by-uuid-b1237544-1f78-4f15-8820-5bb064e0e736/data/docker/appdata/qbittorrent/downloads:/downloads #path to temporary download folder
-    ports:
-      - 8080:8080
-      - 6881:6881
-      - 6881:6881/udp
-    restart: unless-stopped
   
   ##############################################
-  #              PROWLARR INDEXER              #
+  # PROWLARR INDEXERS                          #
   ##############################################
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
@@ -107,28 +126,77 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Europe/Athens
+      - TZ=Etc/UTC
     volumes:
-      - /srv/dev-disk-by-uuid-b1237544-1f78-4f15-8820-5bb064e0e736/data/docker/appdata/prowlarr/config:/config #path to config folder
+      - /path/to/docker/appdata/prowlarr/config:/config
     ports:
       - 9696:9696
     restart: unless-stopped
 
   ##############################################
-  #              BAZARR SUBTITLES              #
+  # BAZARR SUBTITLES                           #
   ##############################################
-
   bazarr:
     image: lscr.io/linuxserver/bazarr:latest
     container_name: bazarr
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Europe/Athens
+      - TZ=Etc/UTC
     volumes:
-      - /srv/dev-disk-by-uuid-b1237544-1f78-4f15-8820-5bb064e0e736/data/docker/appdata/bazarr/config:/config #path to config folder
-      - /srv/dev-disk-by-uuid-b1237544-1f78-4f15-8820-5bb064e0e736/data/plex/movies:/movies #path to plex movies folder
-      - /srv/dev-disk-by-uuid-b1237544-1f78-4f15-8820-5bb064e0e736/data/plex/series:/tv #path to plex series folder
+      - /path/to/docker/appdata/bazarr/config:/config
+      - /path/to/plex/movies:/movies #plex movies folder
+      - /path/to/plex/series:/tv #plex series folder
     ports:
       - 6767:6767
     restart: unless-stopped
+
+  ##############################################
+  # FLARESOLVERR CLOUDFLARE BYPASS PROXY       #
+  ##############################################
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_HTML=${LOG_HTML:-false}
+      - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
+      - TZ=Etc/UTC
+    ports:
+      - "${PORT:-8191}:8191"
+    restart: unless-stopped 
+
+
+  #⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  #⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⢦⠀⠙⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  #⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠲⡌⠳⡀⠙⡄⠀⠀⠀⣠⣤⠀⣰⣶⣆⣠⣄⣀⣠⣷⣶⣶⣦⣀⣰⣄⣀⣴⣶⡀⠠⡄⠀⠀⠀⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  #⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢙⣦⡹⣆⣹⣄⣤⣶⠿⣿⣿⣿⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣻⣿⡷⠿⢷⣦⣄⣴⣄⠘⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  #⠄⠀⠀⠀⠀⠀⠀⠀⣀⠀⠰⣤⣄⣢⣿⣿⣿⣿⣿⡟⠙⢰⣿⣿⡙⠶⣿⣿⣿⣿⡿⠿⠿⣿⢿⣿⣿⣿⣿⣿⠟⣿⣧⡆⠀⠘⢿⣿⣿⣞⢿⣿⣂⣠⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  #⣿⣶⣦⣤⣤⣀⠀⠀⣬⣽⣶⣿⠿⢿⠇⣤⣿⣿⡟⠀⠀⣼⣿⣿⣷⠀⣿⣟⠍⣿⣇⠘⠂⠀⣸⢟⡉⣹⣿⣏⢸⣿⣿⣿⠀⠀⢸⣿⣿⣿⡀⡬⠛⢻⣷⣦⣄⠀⠀⢀⣀⣤⣤⣴⣾
+  #⠉⠛⢿⣿⣷⡺⠿⣿⡿⠿⣿⣿⣶⣾⣿⣿⡾⡿⠃⠀⢰⣿⣿⣿⣏⡐⠈⣉⠀⠈⣿⡇⠀⠀⣿⡟⢹⣟⣉⢁⣼⣿⣿⣿⡇⠀⠛⢹⣟⣉⣧⣶⣴⣶⣶⣾⢿⣿⡯⠿⣶⣿⡷⠟⠉
+  #⠀⠀⠀⠈⠙⢛⣾⣿⣷⣿⣿⣿⣿⣿⣿⣿⣿⣷⣧⡀⠈⠉⠾⣿⣏⠀⠀⠈⣉⣵⣿⣁⣀⣀⣸⣿⡟⣇⢻⠛⠉⣿⡷⠙⠃⢀⣨⣾⣿⣿⣿⣿⣿⣿⣿⣿⣏⣿⣷⣾⠟⠉⠀⠀⠀
+  #⠀⠀⠀⠀⠀⣤⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⠀⢀⣿⠙⠃⣠⣾⣿⣿⣿⣿⡿⣿⣿⣿⣿⣿⣾⣶⠀⢻⣇⠀⢠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣻⣿⣦⡀⠀⠀⠀⠀
+  #⠀⠀⠀⢀⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣾⣏⣴⣾⣿⣿⣿⣿⣿⣿⣶⣾⣿⣿⣿⣿⣿⣿⣦⣈⢿⣷⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢿⣿⣷⣄⠀⠀⠀
+  #⠀⠀⢠⣿⣟⡋⠁⠀⠿⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠛⠁⠀⣈⣿⢻⣧⠀⠀
+  #⠀⢀⣾⣏⣹⣿⣿⣿⣷⣶⣮⣽⣿⣿⣿⣛⣋⣥⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢿⣿⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣯⣙⣛⣿⣿⣿⣉⣭⣴⠶⣿⣿⣿⡿⡋⢹⡇⠀
+  #⠀⠈⡷⠀⢙⣷⣿⣿⣿⣧⣀⠀⠀⢉⠉⠉⠁⠀⣀⣀⣼⠈⠻⣿⣿⣿⣿⣿⣿⣿⣷⢀⣟⣀⢲⣹⣿⣿⣿⣿⣿⣿⣿⠘⣧⡀⠀⠀⠈⠉⠁⠁⡀⠀⣀⡀⠘⠛⠿⠷⢟⣃⣼⡇⠀
+  #⠀⢰⡷⠼⠿⣿⣷⣦⡌⢉⣛⠻⠿⣧⣀⡀⢀⣠⣼⣿⣷⢤⡤⠈⠛⠛⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠿⠛⠋⠠⠶⣬⣿⣤⣄⡀⠀⣀⣤⡿⠟⢛⣀⡀⣤⣄⣿⡿⠿⠶⣧⠀
+  #⠀⢸⡛⣒⣂⣬⣭⢽⣟⣻⡿⣿⠆⠈⣩⣿⠿⠏⣉⢉⣤⣶⠦⠀⠀⠀⠀⠉⠻⣿⣿⣿⣿⣿⣿⣿⣿⠋⠀⠀⠀⠀⠀⣴⣦⣍⢉⡙⠿⢿⣯⣅⠀⠾⠿⢟⡛⠛⣭⠍⠐⠀⠈⢿⠀
+  #⠀⣽⣿⣹⡍⣡⣴⣶⣾⣿⣥⣤⣄⣛⣉⣩⡷⠾⠛⠛⠛⠉⠈⠀⠀⠀⠀⣀⠀⢾⣿⣿⣿⣿⣿⣿⠆⣠⠀⠀⠀⠀⠀⠉⠙⠛⠻⠷⢶⣆⡉⠛⣣⣤⣤⣬⣷⣶⣦⣄⠀⠀⠈⢻⠀
+  #⠀⣾⡷⠶⠶⠶⠶⠿⠿⠯⠅⠀⠈⠉⠉⠉⠀⢀⠐⠚⣶⠶⠲⣶⠀⢴⡦⠻⣷⡾⣿⣿⣿⣿⢸⡇⢰⠉⠁⣠⠀⠀⣄⠀⣶⠚⢦⡀⠀⠀⠉⠉⠁⠀⠀⠉⠿⠿⠶⠶⠶⠶⠶⢾⠀
+  #⠀⣼⣅⣠⣠⡶⠶⠀⠀⠀⠀⠀⠀⠀⠀⠀⠠⠐⠒⠀⣻⠀⠸⠏⣶⠀⠀⠀⠜⢸⣿⣿⣿⣿⣄⡠⠀⠠⠀⠀⠀⣀⢻⠀⠟⠀⠸⠷⠄⠒⠀⠀⠀⠀⠀⠀⠀⠐⠀⠂⠀⢀⣀⣼⠀
+  #⠀⢸⣶⠖⠒⠀⠀⣀⣀⣀⣤⣤⡄⠀⠀⠀⣀⣀⣀⣼⠇⢠⣶⣿⢹⣷⣀⣦⣶⣿⣿⣿⠛⢿⣿⣿⣷⣤⣀⣐⠀⢹⣶⣤⣤⣷⣄⣀⠀⠀⠀⠀⠀⢄⠀⣄⣀⣀⠀⠀⠀⠀⢤⡶⠀
+  #⠀⠀⠙⣦⡶⠚⠛⠛⠋⣉⣭⡥⠆⠀⠀⠀⠻⠍⠉⠁⠀⢾⣷⣿⣾⣿⣿⣿⣿⣿⣿⠟⠓⠻⣿⣿⣿⣿⣿⣿⣷⣿⣧⣿⣇⠈⠉⠛⢷⡀⠀⠀⠀⠶⣬⣉⠉⠛⠛⠓⡂⣤⡞⠁⠀
+  #⠀⠀⠀⠘⢷⣶⣶⠿⢛⣩⠄⠀⠀⢠⡆⠈⣷⠀⠀⠀⠘⣶⣿⣿⠿⠿⠿⠛⠉⠉⠀⠀⠀⠀⠀⠉⠉⠛⠻⠿⠿⣿⣿⣿⣷⡀⠀⠀⢀⠁⠀⠀⠀⠀⠀⢈⣙⠻⢿⣶⣷⠟⠀⠀⠀
+  #⠀⠀⠀⠀⢸⣿⡷⢟⣩⠅⠀⢀⡴⢋⣴⠞⠉⠀⠀⠀⠰⠋⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠛⠙⠙⠁⠀⠀⢠⠙⣦⡀⠀⣀⠀⠐⢮⣙⢷⣮⣽⠀⠀⠀⠀
+  #⠀⠀⠀⠀⢻⣿⣴⡛⣃⡄⠴⠋⣠⡞⠁⣠⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢧⣈⠳⣦⡘⠷⠴⣶⣝⠳⣾⡿⠀⠀⠀⠀
+  #⠀⠀⠀⠀⠀⠙⢿⣯⢋⡀⢀⣾⠟⣠⡾⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠻⣆⠙⢷⣤⠀⠀⢈⣼⠿⠁⠀⠀⠀⠀
+  #⠀⠀⠀⠀⠀⠀⠀⢻⣾⣴⡿⣫⣾⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢙⢷⣜⠻⣧⠰⣼⠅⠀⠀⠀⠀⠀⠀
+  #⠀⠀⠀⠀⠀⠀⠀⠘⣿⡟⣱⠏⠀⠀⢠⡄⣴⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣞⢷⡙⣿⡼⠆⠀⠀⠀⠀⠀⠀
+  #⠀⠀⠀⠀⠀⠀⠀⠀⢨⣿⠇⠀⠀⠙⣿⢿⣿⣤⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠀⠀⠀⠀⠀⠀⣠⣠⣴⠶⠠⠤⠈⡅⠀⠹⣏⠀⠀⠀⠀⠀⠀⠀⠀
+  #⠀⠀⠀⠀⠀⠀⣠⣴⡿⠁⠀⠀⠀⠀⠃⠀⠙⠻⠟⠿⢦⠀⠀⠙⠿⠿⠀⠄⢰⣿⢷⣾⣿⣷⡆⣴⣿⣿⠇⢱⣿⡿⠀⠀⣠⠾⠋⠁⠀⠀⠀⠀⠀⠃⠀⠀⠘⣷⢄⠀⠀⠀⠀⠀⠀
+  #⠀⠀⠀⠀⣤⣴⣿⡿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⠀⠈⠀⠁⠀⠈⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣤⠀⠀⠀⢹⣎⢳⣤⣤⡀⠀⠀
+  #⠀⠀⠀⠀⣼⡿⣿⣧⣄⠀⠀⠀⠀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⠏⠀⠀⣠⣾⡿⠉⡏⠉⠁⠀⠀
+  #⠀⠀⠀⠀⢎⠅⣇⠽⠿⠷⣦⣠⣄⣻⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⡾⠋⠰⠤⣾⠿⠋⠘⠀⠀⠀⠀⠀⠀
+  #⠀⠀⠀⠀⠀⠐⣿⣿⣗⣦⡀⢀⠈⠛⠻⢧⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⠟⠋⠀⢀⣀⣠⣤⠁⠜⠀⠀⠀⠀⠀⠀
+  #⠀⠀⠀⠀⠀⠀⠀⠈⠻⣟⢿⣿⣶⠀⠀⠀⠙⡿⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⡟⠁⢀⡄⣠⣾⣿⡋⠀⠀⠀⠀⠀⠀⠀⠀⠀
